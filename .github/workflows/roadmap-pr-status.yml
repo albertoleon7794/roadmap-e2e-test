@@ -1,0 +1,26 @@
+name: Roadmap card status
+
+# A pull request that says `Refs #N` moves card N to "In progress" on the roadmap
+# (scripts/roadmap/pr-status.mjs). pull_request_target runs this workflow from the
+# base branch, so a pull request from a fork can't change what runs with the token,
+# and the PR's own code is never checked out.
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  move-cards:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/roadmap
+      - name: Move referenced cards to In progress
+        env:
+          ROADMAP_TOKEN: ${{ secrets.ROADMAP_TOKEN }}
+          ROADMAP_PROJECT_ID: ${{ vars.ROADMAP_PROJECT_ID }}
+        run: node scripts/roadmap/pr-status.mjs
